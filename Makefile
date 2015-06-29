@@ -55,6 +55,7 @@ XHYVE_SRC := \
 	src/pci_virtio_rnd.c \
 	src/pm.c \
 	src/post.c \
+	src/pretend_vga.c \
 	src/rtc.c \
 	src/smbiostbl.c \
 	src/task_switch.c \
@@ -65,7 +66,8 @@ XHYVE_SRC := \
 
 FIRMWARE_SRC := \
 	src/firmware/kexec.c \
-	src/firmware/fbsd.c
+	src/firmware/fbsd.c \
+	src/firmware/smartos.c
 
 SRC := \
 	$(VMM_SRC) \

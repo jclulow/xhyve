@@ -77,3 +77,4 @@ int emulate_inout(int vcpu, struct vm_exit *vmexit, int strict);
 int register_inout(struct inout_port *iop);
 int unregister_inout(struct inout_port *iop);
 void init_bvmcons(void);
+void init_pretend_vga(void);
