@@ -4,7 +4,7 @@ SMARTOS_DIR="/var/tmp/SMARTOS/platform-20150625T055522Z"
 
 KERNEL="${SMARTOS_DIR}/i86pc/kernel/amd64/unix"
 INITRD="${SMARTOS_DIR}/i86pc/amd64/boot_archive"
-CMDLINE="-B prom_debug=true,map_debug=true,console=ttya,ttya-mode=\"9600,8,n,1,-\" -kd"
+CMDLINE="-B prom_debug=true,map_debug=true,console=ttya,ttya-mode=\"9600,8,n,1,-\" -v -kd"
 
 MEM="-m 1G"
 #SMP="-c 2"
