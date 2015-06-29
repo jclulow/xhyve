@@ -55,7 +55,6 @@ XHYVE_SRC := \
 	src/pci_virtio_rnd.c \
 	src/pm.c \
 	src/post.c \
-	src/pretend_vga.c \
 	src/rtc.c \
 	src/smbiostbl.c \
 	src/task_switch.c \

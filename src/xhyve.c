@@ -933,8 +933,6 @@ main(int argc, char *argv[])
 	if (bvmcons)
 		init_bvmcons();
 
-	init_pretend_vga();
-
 	/*
 	 * build the guest tables, MP etc.
 	 */
