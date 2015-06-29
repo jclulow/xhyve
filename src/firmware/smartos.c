@@ -239,7 +239,7 @@ smartos_multiboot_info(region_t *mbinfo, region_t *cmdline, region_t *mbmods,
 
 	mbi.mbi_flags |= MBI_FLAG_MEMORY_INFO;
 	mbi.mbi_mem_lower = 640;
-	mbi.mbi_mem_upper = 1024 * 1024;
+	mbi.mbi_mem_upper = 900 * 1024;
 
 	/*
 	 * Set up string for module[0]:
@@ -431,7 +431,6 @@ smartos_init(char *kernel_path, char *initrd_path, char *cmdline)
 uint64_t
 smartos_load(void)
 {
-	region_t low;
 	region_t mem, kern, mbinfo, cmdline, mbmods, mbstrs, bootarch;
 	uint64_t rip;
 	region_t *last;
@@ -456,21 +455,17 @@ smartos_load(void)
 	DLOG("kern [%8lx,%8lx)", kern.rg_paddr, region_last_paddr(&kern));
 	last = &kern;
 
-	low.rg_paddr = 0;
-	low.rg_vaddr = mem.rg_vaddr;
-	low.rg_size = kern.rg_paddr - mem.rg_paddr - 1;
-
 	/*
 	 * Allocate space for multiboot information.
 	 */
-	region_child(&low, &mbinfo, 1 * 1024 * 1024, PAGESIZE);
+	region_child(&mem, &mbinfo, NEXT_PAGE(region_last_paddr(last)), PAGESIZE);
 	DLOG("mbinfo @ [%8lx,%8lx)", mbinfo.rg_paddr, region_last_paddr(&mbinfo));
 	last = &mbinfo;
 
 	/*
 	 * Write command line:
 	 */
-	region_child(&low, &cmdline, NEXT_PAGE(region_last_paddr(last)), PAGESIZE);
+	region_child(&mem, &cmdline, NEXT_PAGE(region_last_paddr(last)), PAGESIZE);
 	memset(cmdline.rg_vaddr, 0, PAGESIZE);
 	memcpy(cmdline.rg_vaddr, g_soc.soc_cmdline, strlen(g_soc.soc_cmdline));
 	DLOG("cmdline @ [%8lx,%8lx)", cmdline.rg_paddr, region_last_paddr(&cmdline));
@@ -480,11 +475,11 @@ smartos_load(void)
 	/*
 	 * Create multiboot module array:
 	 */
-	region_child(&low, &mbmods, NEXT_PAGE(region_last_paddr(last)), PAGESIZE);
+	region_child(&mem, &mbmods, NEXT_PAGE(region_last_paddr(last)), PAGESIZE);
 	DLOG("mb mods @ [%8lx,%8lx)", mbmods.rg_paddr, region_last_paddr(&mbmods));
 	last = &mbmods;
 
-	region_child(&low, &mbstrs, NEXT_PAGE(region_last_paddr(last)), PAGESIZE);
+	region_child(&mem, &mbstrs, NEXT_PAGE(region_last_paddr(last)), PAGESIZE);
 	DLOG("mb strs @ [%8lx,%8lx)", mbstrs.rg_paddr, region_last_paddr(&mbstrs));
 	last = &mbstrs;
 
@@ -492,7 +487,7 @@ smartos_load(void)
 	 * Load boot_archive:
 	 */
 	if (smartos_load_bootarchive(g_soc.soc_initrd_path, &mem, &bootarch,
-	    NEXT_PAGE(region_last_paddr(&kern))) != 0) {
+	    NEXT_PAGE(region_last_paddr(last)) + 100 * PAGESIZE) != 0) {
 		errx(1, "could not load boot_archive");
 	}
 	DLOG("bootarch @ [%8lx,%8lx)", bootarch.rg_paddr, region_last_paddr(&bootarch));
