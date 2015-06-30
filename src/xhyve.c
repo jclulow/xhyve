@@ -411,9 +411,38 @@ vmexit_spinup_ap(struct vm_exit *vme, int *pvcpu)
 static int
 vmexit_vmx(struct vm_exit *vme, int *pvcpu)
 {
+	struct dumpreg {
+		long dr_reg;
+		const char *dr_name;
+	} dumpregs[] = {
+		{ VM_REG_GUEST_CR0,		"cr0" },
+		{ VM_REG_GUEST_CR3,		"cr3" },
+		{ VM_REG_GUEST_CR4,		"cr4" },
+		{ VM_REG_GUEST_RFLAGS,		"rflags" },
+		{ VM_REG_GUEST_RAX,		"rax" },
+		{ VM_REG_GUEST_RBX,		"rbx" },
+		{ VM_REG_GUEST_RDI,		"rdi" },
+		{ VM_REG_GUEST_RSI,		"rsi" },
+		{ VM_REG_GUEST_RCX,		"rcx" },
+		{ VM_REG_GUEST_RDX,		"rdx" },
+		{ VM_REG_GUEST_RBP,		"rbp" },
+		{ VM_REG_GUEST_RSP,		"rsp" },
+		{ VM_REG_GUEST_RIP,		"rip" },
+		{ 0,				NULL }
+	};
+
 	fprintf(stderr, "vm exit[%d]\r\n", *pvcpu);
 	fprintf(stderr, "\treason\t\tVMX\r\n");
-	fprintf(stderr, "\trip\t\t0x%016llx\r\n", vme->rip);
+
+	for (struct dumpreg *dr = dumpregs; dr->dr_name != NULL; dr++) {
+		uint64_t val;
+
+		if (xh_vm_get_register(*pvcpu, (int)dr->dr_reg, &val) == 0) {
+			fprintf(stderr, "\t%s\t\t%16llx\r\n", dr->dr_name,
+			    val);
+		}
+	}
+
 	fprintf(stderr, "\tinst_length\t%d\r\n", vme->inst_length);
 	fprintf(stderr, "\tstatus\t\t%d\r\n", vme->u.vmx.status);
 	fprintf(stderr, "\texit_reason\t%u\r\n", vme->u.vmx.exit_reason);
