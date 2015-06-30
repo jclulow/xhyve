@@ -1,6 +1,8 @@
-#!/bin/sh
+#!/bin/bash
 
-SMARTOS_DIR="/var/tmp/SMARTOS/platform-20150625T055522Z"
+ROOT=$(cd $(dirname $0)/; pwd)
+
+SMARTOS_DIR="${ROOT}/platform"
 
 KERNEL="${SMARTOS_DIR}/i86pc/kernel/amd64/unix"
 INITRD="${SMARTOS_DIR}/i86pc/amd64/boot_archive"
