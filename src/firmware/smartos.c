@@ -514,7 +514,7 @@ smartos_load(void)
 	/*
 	 * Enable protected mode (PE).
 	 */
-	xh_vm_set_register(0, VM_REG_GUEST_CR0, CR0_PE);
+	xh_vm_set_register(0, VM_REG_GUEST_CR0, CR0_PE | CR0_NE | CR0_ET);
 	xh_vm_set_register(0, VM_REG_GUEST_RFLAGS, 0x2);
 
 	/*
