@@ -1186,7 +1186,7 @@ vmx_set_guest_reg(int vcpu, int ident, uint64_t regval)
 static int
 vmx_emulate_cr0_access(UNUSED struct vm *vm, int vcpu, uint64_t exitqual)
 {
-	uint64_t crval, regval;
+	uint64_t crval;
 	uint64_t efer, entryctls;
 	// *pt;
 
@@ -1194,16 +1194,11 @@ vmx_emulate_cr0_access(UNUSED struct vm *vm, int vcpu, uint64_t exitqual)
 	if ((exitqual & 0xf0) != 0x00)
 		return (UNHANDLED);
 
-	regval = vmx_get_guest_reg(vcpu, (exitqual >> 8) & 0xf);
-
-	vmcs_write(vcpu, VMCS_CR0_SHADOW, regval);
-
-	crval = regval | cr0_ones_mask;
+	crval = vmx_get_guest_reg(vcpu, (exitqual >> 8) & 0xf);
+	crval |= cr0_ones_mask;
 	crval &= ~cr0_zeros_mask;
-#if 0
-	printf("cr0: v:0x%016llx 1:0x%08llx 0:0x%08llx v:0x%016llx\r\n",
-	    regval, cr0_ones_mask, cr0_zeros_mask, crval);
-#endif
+
+	vmcs_write(vcpu, VMCS_CR0_SHADOW, crval);
 	vmcs_write(vcpu, VMCS_GUEST_CR0, crval);
 
 	/*
