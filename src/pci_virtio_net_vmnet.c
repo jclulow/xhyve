@@ -328,6 +328,9 @@ vmn_read(struct vmnet_state *vms, struct iovec *iov, int n) {
 	struct vmpktdesc v;
 	int pktcnt;
 	int i;
+	char bounce[2000];
+	int use_bounce = 0;
+	struct iovec bounce_iovec[1];
 
 	v.vm_pkt_size = 0;
 
@@ -335,10 +338,34 @@ vmn_read(struct vmnet_state *vms, struct iovec *iov, int n) {
 		v.vm_pkt_size += iov[i].iov_len;
 	}
 
+	/*
+	 * The vmnet_read() interface has a particularly striking deficiency:
+	 * it will not accept an io_vec with less than some arbitrary minimum
+	 * size.  In practice, on some systems, this minimum size is 1518
+	 * bytes: large enough for an Ethernet frame with a VLAN tag.
+	 *
+	 * The UEFI firmware package provided by the FreeBSD bhyve project
+	 * seems to tickle the VirtIO NIC interface early in boot, providing a
+	 * 1514 byte descriptor in the RX ring.  We simply cannot pass this
+	 * buffer to vmnet_read(), so we'll need to make use of a bounce
+	 * buffer.
+	 */
+	if (n == 1 && v.vm_pkt_size < vms->max_packet_size &&
+	    vms->max_packet_size <= sizeof (bounce)) {
+		v.vm_pkt_size = bounce_iovec[0].iov_len = sizeof (bounce);
+		bounce_iovec[0].iov_base = (void *)bounce;
+		use_bounce = 1;
+	}
+
 	assert(v.vm_pkt_size >= vms->max_packet_size);
 
-	v.vm_pkt_iov = iov;
-	v.vm_pkt_iovcnt = (uint32_t) n;
+	if (use_bounce) {
+		v.vm_pkt_iov = bounce_iovec;
+		v.vm_pkt_iovcnt = 1;
+	} else {
+		v.vm_pkt_iov = iov;
+		v.vm_pkt_iovcnt = (uint32_t) n;
+	}
 	v.vm_flags = 0; /* TODO no clue what this is */
 
 	pktcnt = 1;
@@ -349,6 +376,14 @@ vmn_read(struct vmnet_state *vms, struct iovec *iov, int n) {
 
 	if (pktcnt < 1) {
 		return (-1);
+	}
+
+	if (use_bounce) {
+		/*
+		 * Copy the portion of the bounce buffer that fits in the
+		 * original buffer back, discarding the rest.
+		 */
+		bcopy(bounce, iov[0].iov_base, iov[0].iov_len);
 	}
 
 	return ((ssize_t) v.vm_pkt_size);
